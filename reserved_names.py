@@ -1,53 +1,49 @@
-# Зарезервированные имена почтовых ящиков
-# Нельзя зарегистрировать: < 3 символов, стандартные служебные имена
+# Reserved mailbox names
+# Cannot register: < 3 chars, standard service names, etc.
 
 RESERVED_NAMES = {
-    # Системные
+    # System
     "root", "admin", "administrator", "system", "master", "operator",
     "postmaster", "mailer-daemon", "mailer", "daemon", "nobody",
     "hostmaster", "webmaster", "noc", "security", "ssl", "cert",
     
-    # Почтовые службы
+    # Mail services
     "abuse", "spam", "mail", "email", "post", "letter", "message",
     "inbox", "sent", "draft", "trash", "junk", "spam", "archive",
     "quarantine", "newsletter", "mailing", "mailer", "mailman",
     "noreply", "no-reply", "reply", "forward", "redirect", "bounce",
     
-    # Служебные
+    # Service
     "support", "info", "help", "contact", "feedback", "service",
     "office", "manager", "moderator", "team", "staff", "sales",
     "marketing", "privacy", "legal", "dmca", "complaint",
     
-    # Сеть/Домен
+    # Network/Domain
     "www", "ftp", "api", "dns", "mx", "smtp", "imap", "pop3",
     "pop", "vps", "vpn", "proxy", "relay", "server", "host",
     "ns1", "ns2", "ns3", "ns4", "domain", "registrar",
     
-    # Разное
+    # Misc
     "test", "demo", "trial", "fake", "guest", "temp", "tmp", "null",
     "none", "undefined", "empty", "delete", "remove", "stop",
     "unsubscribe", "user", "bot", "robot", "auto", "automatic",
     "blog", "forum", "chat", "shop", "store", "payment", "billing",
     "invoice", "receipt", "fraud", "survey",
     
-    # Статистика/мониторинг
+    # Stats/Monitoring
     "stats", "stat", "monitor", "monitoring", "alert", "alerts",
     "status", "uptime", "health", "ping",
-    
-    # Русские
-    "админ", "администратор", "инфо", "почта", "письмо",
-    "спам", "поддержка", "support1", "info1", "abuse1",
 }
 
 def is_reserved(name: str) -> bool:
-    """Проверяет, зарезервировано ли имя."""
+    """Check if a name is reserved."""
     name_lower = name.lower().strip()
     
-    # Короче 3 символов
+    # Shorter than 3 characters
     if len(name_lower) < 3:
         return True
     
-    # В списке зарезервированных
+    # In the reserved list
     if name_lower in RESERVED_NAMES:
         return True
     

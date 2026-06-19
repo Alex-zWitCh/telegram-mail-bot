@@ -1,82 +1,84 @@
 # 📧 MailBot — Telegram Email Manager
 
-Telegram-бот для управления почтовыми ящиками на собственном домене через **Dovecot + Postfix**.
+A Telegram bot for managing email mailboxes on your own domain via **Dovecot + Postfix**.
 
-## ✨ Возможности
+Create mailboxes, read incoming emails, send replies, check quota usage — all from Telegram.
 
-| Команда | Описание |
-|---------|----------|
-| `/start` | Главное меню |
-| `/register` | Создать новый почтовый ящик |
-| `/login` | Войти в существующий ящик |
-| `/inbox` | Просмотреть входящие (последние 5) |
-| `/send` | Написать новое письмо |
-| `/mybox` | Информация о ящике + заполненность |
-| `/logout` | Выйти, удалить пароль из бота |
-| `/cancel` or `/exit` | Отменить текущее действие |
+## ✨ Features
 
-### 🔑 Регистрация
-- Выбор имени → проверка на занятость
-- Запрос резервного email → отправка 6-значного кода
-- **3 варианта хранения пароля:**
-  1. **Автогенерация** — бот создаёт и сохраняет пароль
-  2. **Свой пароль** — ⚠️ виден администратору сервера
-  3. **Не сохранять** — пароль только в письме, /login при каждом входе
-- Пароль показывается 1 раз, через 10 минут сообщение заменяется на уведомление о конфиденциальности
-- Выдаются 3 инвайт-кода для приглашения других
+| Command | Description |
+|---------|-------------|
+| `/start` | Main menu |
+| `/register` | Create a new mailbox |
+| `/login` | Log into an existing mailbox |
+| `/inbox` | View inbox (last 5 messages) |
+| `/send` | Compose a new email |
+| `/mybox` | Mailbox info + disk usage |
+| `/logout` | Log out, remove password from bot |
+| `/cancel` or `/exit` | Cancel current operation |
 
-### 📥 Почта
-- Чтение входящих (5 последних писем)
-- Просмотр темы, отправителя, даты, тела
-- Ответ на письмо
-- Отправка новых писем (To → Subject → Body)
+### 🔑 Registration
+- Pick a name → availability check
+- Provide a backup email → receive a 6-digit verification code
+- **3 password storage options:**
+  1. **Auto-generate** — bot creates and stores the password
+  2. **Custom password** — ⚠️ visible to the server administrator
+  3. **No storage** — password sent via email only, use `/login` each time
+- Password shown once; after 10 minutes the message is replaced with a privacy notice
+- 3 invitation codes issued for inviting others
 
-### 👤 Профиль
-- Email, дата создания
-- **Прогресс-бар заполнения** 🟩🟩⬜⬜⬜ (квота: 300 MB по умолчанию)
-- IMAP/SMTP настройки
+### 📥 Mail
+- Read inbox (last 5 emails)
+- View subject, sender, date, body
+- Reply to messages
+- Compose new emails (To → Subject → Body)
+
+### 👤 Profile
+- Email address, creation date
+- **Usage progress bar** 🟩🟩⬜⬜⬜ (default quota: 300 MB)
+- IMAP/SMTP connection settings
 
 ### 🚪 Logout
-- Удаляет пароль из памяти бота
-- Email остаётся привязанным (1 Telegram = 1 email)
-- Можно заново войти через /login
+- Removes the password from the bot's memory
+- Email stays linked (1 Telegram account = 1 email)
+- Re-enter via `/login`
 
-### 🔐 Безопасность
-- Письма шифруются на диске (Dovecot mail_crypt)
-- Логи отключены
-- Пароль автоматически удаляется из сообщения через 10 минут
-- /cancel прерывает любой ввод
+### 🔐 Security
+- Emails encrypted on disk (Dovecot mail_crypt)
+- Logging disabled
+- Password automatically removed from message after 10 minutes
+- `/cancel` aborts any input flow
 
-## 🧱 Требования
+## 🧱 Requirements
 
-- **OS:** Linux (Ubuntu 22.04+/Debian 12+)
+- **OS:** Linux (Ubuntu 22.04+ / Debian 12+)
 - **Python:** 3.10+
-- **Mail server:** Dovecot (IMAP) + Postfix (SMTP) — работающие на том же хосте
-- **Telegram Bot Token** — от [@BotFather](https://t.me/BotFather)
+- **Mail server:** Dovecot (IMAP) + Postfix (SMTP) running on the same host
+- **Telegram Bot Token** from [@BotFather](https://t.me/BotFather)
 
-### Рекомендуемая конфигурация почтового сервера
+### Recommended Mail Server Setup
 
-- Dovecot: IMAP на 127.0.0.1:143 (STARTTLS) или 993 (SSL)
-- Postfix: Submission на 127.0.0.1:587 (STARTTLS)
-- Dovecot users file: `/etc/dovecot/users` (формат: `email:{BLF-CRYPT}hash:uid:gid::/maildir::`)
+- Dovecot: IMAP on 127.0.0.1:143 (STARTTLS) or 993 (SSL)
+- Postfix: Submission on 127.0.0.1:587 (STARTTLS)
+- Dovecot users file: `/etc/dovecot/users` (format: `email:{BLF-CRYPT}hash:uid:gid::/maildir::`)
 - Maildir: `/var/mail/vhosts/{domain}/{user}/`
-- Dovecot quota: 300 MB (настраивается)
+- Quota: 300 MB (configurable)
 
-## 🚀 Быстрая установка
+## 🚀 Quick Start
 
 ```bash
-# 1. Клонировать репозиторий
-git clone https://github.com/YOUR_USER/mailbot.git /opt/mailbot
+# 1. Clone the repository
+git clone https://github.com/YOUR_USER/telegram-mail-bot.git /opt/mailbot
 cd /opt/mailbot
 
-# 2. Создать виртуальное окружение
+# 2. Create a virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# 3. Установить зависимости
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Настроить .env
+# 4. Configure environment
 cat > .env << 'EOF'
 MAILBOT_TOKEN=your_telegram_bot_token
 MAIL_DOMAIN=your-domain.com
@@ -85,11 +87,11 @@ SMTP_PASSWORD=your_smtp_password
 MAIL_QUOTA=300
 EOF
 
-# 5. Запустить
+# 5. Run
 python3 bot.py
 ```
 
-### 🐳 Systemd service
+### 🐳 Systemd Service
 
 ```ini
 # /etc/systemd/system/mailbot.service
@@ -115,56 +117,56 @@ systemctl daemon-reload
 systemctl enable --now mailbot
 ```
 
-## 🔧 Переменные окружения
+## 🔧 Environment Variables
 
-| Переменная | По умолчанию | Описание |
-|-----------|-------------|----------|
-| `MAILBOT_TOKEN` | — | **Токен Telegram бота (обязательно)** |
-| `MAIL_DOMAIN` | `example.com` | Домен email |
-| `SMTP_USER` | `noreply@{DOMAIN}` | Юзер для отправки уведомлений |
-| `SMTP_PASSWORD` | `""` | Пароль для отправки уведомлений |
-| `IMAP_HOST` | `127.0.0.1` | IMAP сервер |
-| `IMAP_PORT` | `143` | IMAP порт |
-| `SMTP_HOST` | `127.0.0.1` | SMTP сервер |
-| `SMTP_PORT` | `587` | SMTP порт |
-| `MAIL_QUOTA` | `300` | Квота ящика в MB |
-| `DOVECOT_USER_FILE` | `/etc/dovecot/users` | Файл пользователей Dovecot |
-| `DOVECOT_EXTRA_FILE` | `/etc/dovecot/user-extra.conf` | Файл backup-email |
-| `MAIL_DIR` | `/var/mail/vhosts` | Maildir родительская папка |
-| `DATA_FILE` | `/opt/mailbot/data.json` | Файл данных бота |
-| `INVITES_FILE` | `/etc/dovecot/invites.json` | Файл инвайт-кодов |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAILBOT_TOKEN` | — | **Telegram Bot token (required)** |
+| `MAIL_DOMAIN` | `example.com` | Email domain |
+| `SMTP_USER` | `noreply@{DOMAIN}` | SMTP user for sending notifications |
+| `SMTP_PASSWORD` | `""` | SMTP password for notifications |
+| `IMAP_HOST` | `127.0.0.1` | IMAP server |
+| `IMAP_PORT` | `143` | IMAP port |
+| `SMTP_HOST` | `127.0.0.1` | SMTP server |
+| `SMTP_PORT` | `587` | SMTP port |
+| `MAIL_QUOTA` | `300` | Mailbox quota in MB |
+| `DOVECOT_USER_FILE` | `/etc/dovecot/users` | Dovecot users file |
+| `DOVECOT_EXTRA_FILE` | `/etc/dovecot/user-extra.conf` | Backup email mapping file |
+| `MAIL_DIR` | `/var/mail/vhosts` | Maildir parent directory |
+| `DATA_FILE` | `/opt/mailbot/data.json` | Bot data storage file |
+| `INVITES_FILE` | `/etc/dovecot/invites.json` | Invitation codes file |
 
-## 📁 Структура проекта
+## 📁 Project Structure
 
 ```
 mailbot/
-├── bot.py              # Основной код бота
-├── reserved_names.py   # Список запрещённых имён
-├── requirements.txt    # Зависимости
-├── .env.example        # Пример конфига
+├── bot.py              # Main bot code
+├── reserved_names.py   # Reserved/resricted mailbox names
+├── requirements.txt    # Python dependencies
+├── .env.example        # Sample configuration
 ├── .gitignore
 ├── LICENSE
 └── README.md
 ```
 
-## 🔒 Примечания по безопасности
+## 🔒 Security Notes
 
-- SMTP-учётка для отправки уведомлений должна иметь **ограниченные права** (только send)
-- Пароли пользователей хранятся в `data.json` — **ограничьте доступ** к файлу (`chmod 600`)
-- Dovecot должен использовать `BLF-CRYPT` или более сильный хеш
-- Для продакшена включите `mail_crypt` для шифрования писем на диске
-- Регулярно обновляйте aiogram и зависимости
+- The SMTP account used for sending notifications should have **restricted permissions** (send only)
+- User passwords are stored in `data.json` — **restrict file access** (`chmod 600`)
+- Dovecot should use `BLF-CRYPT` or a stronger hash algorithm
+- Enable `mail_crypt` in production for at-rest email encryption
+- Keep aiogram and all dependencies up to date
 
-## 🧪 Тестирование
+## 🧪 Testing
 
 ```bash
-# Проверка синтаксиса
+# Syntax check
 python3 -m py_compile bot.py
 
-# Запуск в режиме отладки
+# Run in debug mode
 MAILBOT_TOKEN=test:token python3 bot.py
 ```
 
-## 📄 Лицензия
+## 📄 License
 
 MIT
