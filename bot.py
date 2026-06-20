@@ -264,10 +264,17 @@ def fetch_mails(email, password, count=5):
                 continue
             msg = eml.message_from_bytes(d2[0][1])
             s = msg.get("Subject", "")
+            f = msg.get("From", "?")
             try:
                 s = "".join(
                     p.decode(ch or "utf-8", "replace") if isinstance(p, bytes) else p
                     for p, ch in decode_header(s))
+            except Exception:
+                pass
+            try:
+                f = "".join(
+                    p.decode(ch or "utf-8", "replace") if isinstance(p, bytes) else p
+                    for p, ch in decode_header(f))
             except Exception:
                 pass
             body = ""
@@ -289,7 +296,7 @@ def fetch_mails(email, password, count=5):
             msgs.append({
                 "uid": i.decode() if isinstance(i, bytes) else i,
                 "subject": str(s)[:100],
-                "from": str(msg.get("From", "?"))[:100],
+                "from": str(f)[:100],
                 "date": str(msg.get("Date", ""))[:30],
                 "body": body,
             })
