@@ -400,6 +400,7 @@ async def cmd_inbox(message: types.Message):
                              reply_markup=main_kb())
         return
     user["last_emails"] = msgs
+    user["seen_uids"] = list(set(user.get("seen_uids", []) + [str(e.get("uid","")) for e in msgs]))
     set_user(message.from_user.id, user)
     await message.answer(f"📥 **Входящие** ({len(msgs)}):",
                          parse_mode="Markdown", reply_markup=inbox_kb(msgs))
@@ -515,6 +516,7 @@ async def login_cred(m: types.Message, state: FSMContext):
         "backup": "",
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "tg_username": m.from_user.username or "",
+        "seen_uids": [],
     })
     await st.edit_text(f"✅ **Вошёл!**\n📧 `{email}`\n\n📥 /inbox",
                        parse_mode="Markdown", reply_markup=main_kb())
@@ -538,6 +540,7 @@ async def cb_inbox(cb: types.CallbackQuery):
         return
     msgs = fetch_mails(u["email"], u["password"])
     u["last_emails"] = msgs
+    u["seen_uids"] = list(set(u.get("seen_uids", []) + [str(e.get("uid","")) for e in msgs]))
     set_user(cb.from_user.id, u)
     if not msgs or "error" in msgs[0]:
         await cb.message.edit_text("📭 Пусто.", reply_markup=main_kb())
@@ -770,6 +773,7 @@ async def do_create_account(msg, state, email, name, backup, password, store_pas
         "backup": backup,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "tg_username": msg.from_user.username or "",
+        "seen_uids": [],
     }
     if store_password:
         user_data["password"] = password
@@ -949,8 +953,67 @@ async def cb_confirm_force_reg(cb: types.CallbackQuery, state: FSMContext):
 
 # ─── Start ──────────────────────────────────────────────────────
 
+async def check_new_mails_loop():
+    """Background task: check for new emails every 60 seconds and notify."""
+    await asyncio.sleep(10)
+    while True:
+        try:
+            d = load_data()
+            for tg_id_str, user in d.get("users", {}).items():
+                if not user.get("password"):
+                    continue
+                tg_id = int(tg_id_str)
+                try:
+                    m = imaplib.IMAP4(IMAP_HOST, IMAP_PORT)
+                    m.starttls()
+                    m.login(user["email"], user["password"])
+                    m.select("INBOX")
+                    r, data = m.search(None, "ALL")
+                    if r != "OK":
+                        m.logout()
+                        continue
+                    all_ids = [i.decode() if isinstance(i, bytes) else i for i in data[0].split()]
+                    if not all_ids:
+                        m.logout()
+                        continue
+                    recent_ids = all_ids[-5:]
+                    seen = set(user.get("seen_uids", []))
+                    new_ids = [uid for uid in recent_ids if uid not in seen]
+                    if new_ids:
+                        for uid in new_ids:
+                            r2, d2 = m.fetch(uid, "(RFC822)")
+                            if r2 != "OK":
+                                continue
+                            msg = eml.message_from_bytes(d2[0][1])
+                            subject = str(msg.get("Subject", "(No subject)"))[:80]
+                            from_ = str(msg.get("From", "?"))[:60]
+                            try:
+                                from email.header import decode_header
+                                subject = "".join(
+                                    p.decode(ch or "utf-8", "replace") if isinstance(p, bytes) else p
+                                    for p, ch in decode_header(subject))
+                            except:
+                                pass
+                            notif = f"\U0001f4e8 **\u041d\u043e\u0432\u043e\u0435 \u043f\u0438\u0441\u044c\u043c\u043e**\n\n\U0001f464 {from_}\n\U0001f4dd {subject}"
+                            try:
+                                await bot.send_message(tg_id, notif, parse_mode="Markdown")
+                            except:
+                                pass
+                        user["seen_uids"] = list(set(seen | set(new_ids)))
+                        d["users"][tg_id_str] = user
+                    m.logout()
+                except Exception as e:
+                    logger.warning(f"Notification check failed for {user['email']}: {e}")
+            if d:
+                save_data(d)
+        except Exception as e:
+            logger.error(f"check_new_mails_loop error: {e}")
+        await asyncio.sleep(60)
+
+
 async def main():
     logger.info(f"Starting MailBot... IMAP: {IMAP_HOST}:{IMAP_PORT} Domain: {DOMAIN}")
+    asyncio.create_task(check_new_mails_loop())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
