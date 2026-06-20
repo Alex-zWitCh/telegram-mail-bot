@@ -564,9 +564,32 @@ async def cb_read(cb: types.CallbackQuery):
          f"{ed.get('body', '')[:1000]}")
     k = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📝 Ответить", callback_data=f"reply_{uid}")],
+        [InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_{uid}")],
         [InlineKeyboardButton(text="◀️", callback_data="inbox")]])
     await cb.message.edit_text(t, parse_mode="Markdown", reply_markup=k)
     await cb.answer()
+
+@dp.callback_query(lambda c: c.data.startswith("delete_"))
+async def cb_delete(cb: types.CallbackQuery):
+    """Delete an email via IMAP (mark as deleted then expunge)."""
+    uid = cb.data.split("_", 1)[1]
+    u = get_user(cb.from_user.id)
+    if not u:
+        await cb.answer("Нет доступа")
+        return
+    st = await cb.message.edit_text("🗑 Удаляю...")
+    try:
+        m = imaplib.IMAP4(IMAP_HOST, IMAP_PORT)
+        m.starttls()
+        m.login(u["email"], u["password"])
+        m.select("INBOX")
+        m.store(uid, "+FLAGS", "\\Deleted")
+        m.expunge()
+        m.logout()
+        await st.edit_text("✅ **Письмо удалено**", parse_mode="Markdown", reply_markup=main_kb())
+    except Exception as e:
+        await st.edit_text(f"❌ Ошибка удаления: {str(e)[:60]}", reply_markup=main_kb())
+
 
 @dp.callback_query(lambda c: c.data.startswith("reply_"))
 async def cb_reply(cb: types.CallbackQuery, state: FSMContext):
