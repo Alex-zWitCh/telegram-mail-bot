@@ -986,12 +986,15 @@ async def check_new_mails_loop():
                                 continue
                             msg = eml.message_from_bytes(d2[0][1])
                             subject = str(msg.get("Subject", "(No subject)"))[:80]
-                            from_ = str(msg.get("From", "?"))[:60]
+                            from_ = str(msg.get("From", "?"))[:80]
                             try:
                                 from email.header import decode_header
                                 subject = "".join(
                                     p.decode(ch or "utf-8", "replace") if isinstance(p, bytes) else p
                                     for p, ch in decode_header(subject))
+                                from_ = "".join(
+                                    p.decode(ch or "utf-8", "replace") if isinstance(p, bytes) else p
+                                    for p, ch in decode_header(from_))
                             except:
                                 pass
                             notif = f"\U0001f4e8 **\u041d\u043e\u0432\u043e\u0435 \u043f\u0438\u0441\u044c\u043c\u043e**\n\n\U0001f464 {from_}\n\U0001f4dd {subject}"
