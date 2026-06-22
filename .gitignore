@@ -5,3 +5,4 @@ __pycache__/
 data.json
 venv/
 .venv/
+bot_server_reference.py
